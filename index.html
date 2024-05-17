@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Bounty Hunting Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #282c34;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #1c1e22;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            color: #ffffff;
+        }
+        h1, h2, h3 {
+            color: #61dafb;
+        }
+        h1 {
+            text-align: center;
+        }
+        .step-header {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 5px solid #61dafb;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+        }
+        .step-header:hover {
+            background-color: #3a3f44;
+        }
+        .step-content {
+            display: none;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+        .step-content ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .step-content ul li {
+            margin: 5px 0;
+        }
+        .checkbox {
+            margin-right: 10px;
+        }
+        .show {
+            display: block;
+        }
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #fbbf24, #f87171, #3b82f6);
+            background-size: 300% 300%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .name-display {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        .progress-bar {
+            background: #3a3f44;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress {
+            background: #61dafb;
+            height: 20px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .dotted {
+            border: 2px dotted #61dafb;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .checkbox:checked + label::before {
+            content: '✔';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: #61dafb;
+            color: #1c1e22;
+            text-align: center;
+            line-height: 20px;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        let steps = 6;  // Adjust based on the number of steps
+        let completedTasks = 0;
+        document.addEventListener('DOMContentLoaded', function () {
+            let userName = prompt("Please enter your name:");
+            while (!userName) {
+                userName = prompt("Name is required. Please enter your name:");
+            }
+            document.getElementById('name').innerText = `Welcome, ${userName}`;
+        });
+
+        function toggleStep(event, nextStepId) {
+            const stepContent = event.currentTarget.nextElementSibling;
+            stepContent.classList.toggle('show');
+
+            const nextStep = document.getElementById(nextStepId);
+            if (nextStep) {
+                nextStep.style.display = 'block';
+            }
+        }
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            const totalTasks = checkboxes.length;
+            completedTasks = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
+            const progressPercentage = (completedTasks / totalTasks) * 100;
+            document.querySelector('.progress').style.width = `${progressPercentage}%`;
+        }
+    </script>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="container">
+        <h1>Bug Bounty Hunting Guide</h1>
+        <div id="name" class="name-display"></div>
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+
+        <div class="step-header" onclick="toggleStep(event, 'step2')">
+            <h2>Step 1: Selecting a Target</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>1.1 Choose a Bug Bounty Platform</label>
+                <ul>
+                    <li>HackerOne</li>
+                    <li>Bugcrowd</li>
+                    <li>Synack</li>
+                    <li>Open Bug Bounty</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>1.2 Filter Programs</label>
+                <ul>
+                    <li>Payout History</li>
+                    <li>Number of Submissions</li>
+                    <li>Scope</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>1.3 Review Scope</label>
+                <ul>
+                    <li>Domains</li>
+                    <li>Subdomains</li>
+                    <li>APIs</li>
+                    <li>Mobile apps</li>
+                    <li>Other specific assets</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="step2" class="step-header" style="display:none;" onclick="toggleStep(event, 'step3')">
+            <h2>Step 2: Subdomain Enumeration</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>2.1 Tools and Techniques</label>
+                <ul>
+                    <li>Sublist3r: <code>sublist3r -d example.com -o subdomains.txt</code></li>
+                    <li>Amass: <code>amass enum -d example.com -o subdomains.txt</code></li>
+                    <li>Assetfinder: <code>assetfinder --subs-only example.com > subdomains.txt</code></li>
+                    <li>Subfinder: <code>subfinder -d example.com -o subdomains.txt</code></li>
+                    <li>CRT.sh: Use online to search for subdomains</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>2.2 Check Subdomain Validity</label>
+                <ul>
+                    <li>HTTPx: <code>cat subdomains.txt | httpx > live_subdomains.txt</code></li>
+                    <li>httprobe: <code>cat subdomains.txt | httprobe > live_subdomains.txt</code></li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>2.3 Organize and Document</label>
+                <ul>
+                    <li>Create a spreadsheet to document discovered subdomains, live status, and response codes</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="step3" class="step-header" style="display:none;" onclick="toggleStep(event, 'step4')">
+            <h2>Step 3: Information Gathering</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>3.1 Port Scanning</label>
+                <ul>
+                    <li>Nmap: <code>nmap -iL live_subdomains.txt -oA port_scan_results</code></li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>3.2 Content Discovery</label>
+                <ul>
+                    <li>Gobuster: <code>gobuster dir -u https://target -w /path/to/wordlist -o gobuster_results.txt</code></li>
+                    <li>Dirsearch</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>3.3 Check HTTP Response Codes</label>
+                <ul>
+                    <li>HTTPx</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="step4" class="step-header" style="display:none;" onclick="toggleStep(event, 'step5')">
+            <h2>Step 4: Vulnerability Identification</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>4.1 Automated Scanning</label>
+                <ul>
+                    <li>Nikto: <code>nikto -h https://target</code></li>
+                    <li>Burp Suite</li>
+                    <li>OWASP ZAP</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>4.2 Manual Testing</label>
+                <ul>
+                    <li>Test for vulnerabilities: SQL Injection, XSS, CSRF, SSRF, IDOR</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>4.3 Source Code Analysis</label>
+                <ul>
+                    <li>Review available source code for vulnerabilities</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="step5" class="step-header" style="display:none;" onclick="toggleStep(event, 'step6')">
+            <h2>Step 5: Exploitation and Proof of Concept (PoC)</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>5.1 Confirm Vulnerability</label>
+                <ul>
+                    <li>Reproduce vulnerability multiple times</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>5.2 Develop PoC</label>
+                <ul>
+                    <li>Create a clear and concise PoC</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="step6" class="step-header" style="display:none;" onclick="toggleStep(event, 'step7')">
+            <h2>Step 6: Reporting the Bug</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>6.1 Prepare the Report</label>
+                <ul>
+                    <li>Title</li>
+                    <li>Description</li>
+                    <li>Steps to Reproduce</li>
+                    <li>Impact</li>
+                    <li>PoC</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>6.2 Submit the Report</label>
+                <ul>
+                    <li>Follow platform guidelines for submission</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>6.3 Follow Up</label>
+                <ul>
+                    <li>Monitor report status</li>
+                    <li>Respond to questions from the security team</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="step7" class="step-header" style="display:none;">
+            <h2>Daily Routine Checklist</h2>
+        </div>
+        <div class="step-content">
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>1. Research and Selection</label>
+                <ul>
+                    <li>Research new programs</li>
+                    <li>Revisit old programs</li>
+                    <li>Prioritize based on scope and payout</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>2. Enumeration and Reconnaissance</label>
+                <ul>
+                    <li>Run enumeration tools</li>
+                    <li>Document findings</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>3. Testing and Exploitation</label>
+                <ul>
+                    <li>Manual testing</li>
+                    <li>Automated scans</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>4. Learning and Development</label>
+                <ul>
+                    <li>Learn new vulnerabilities and techniques</li>
+                    <li>Participate in forums</li>
+                    <li>Practice on Hack The Box and TryHackMe</li>
+                </ul>
+            </div>
+            <div class="step">
+                <input type="checkbox" class="checkbox" onclick="updateProgress()">
+                <label>5. Reporting and Follow-Up</label>
+                <ul>
+                    <li>Review reported bugs</li>
+                    <li>Follow up on pending reports</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
